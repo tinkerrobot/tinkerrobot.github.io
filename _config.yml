@@ -105,3 +105,5 @@ deploy:
   type: git
   repo: git@github.com:tinkerrobot/tinkerrobot.github.io.git
   branch: master
+  name: TinkerRobot
+  email: tinker_rb330@outlook.com
