@@ -20,29 +20,76 @@ categories:
 
 ### 思路
 
-所谓前序遍历，指的是先访问节点自身，然后从左向右依次对每个子节点做前序遍历。因此可以使用栈，每次访问并弹出栈顶元素时，就将其子节点从右向左（因为栈的特性是后进先出，所以这里是逆序）依次压入栈中。
+对于任意一个节点，删除之后剩余的树包括以它的每个子节点为根的子树，以及它的父节点所在那颗树。
+
+其中，每颗子树的节点数可以通过深度优先搜索求出。
+
+而父节点所在的那颗树的节点数目，等于树中的节点总数，减去以当前节点为根的子树的节点数。
+
+这样，就可以求出树中任意一个节点的分数了。
 
 ### 代码
 
 ```c#
 public class Solution {
-    public IList<int> Preorder(Node root) {
-        var result = new List<int>();
-        if(root == null) {
-            return result;
+    public int CountHighestScoreNodes(int[] parents) {
+        // 首先，构建出题给的树，保存树中每个节点对其子节点的引用。
+        var num = parents.Length;
+        var children = new List<int>[num];
+
+        for(var i = 0; i < num; ++i) {
+            children[i] = new List<int>();
         }
 
-        var s = new Stack<Node>();
-        s.Push(root);
-        while(s.Count > 0) {
-            var node = s.Pop();
-            result.Add(node.val);
-            for(var i = node.children.Count - 1; i >= 0; --i) {
-                s.Push(node.children[i]);
+        for(var i = 0; i < num; ++i) {
+            if(parents[i] >= 0) {
+                children[parents[i]].Add(i);
+            }
+        }
+
+        // 使用深度优先遍历，求出以每个节点为根的子树的节点数。
+        var trees = new int[num];
+        dfs(0, children, trees);
+
+        // 根据【思路】中的分析，求出每个节点的分数。
+        var scores = new long[num];
+        for(var i = 0; i < num; ++i) {
+            var score = 1L;
+            // 以每个子节点为根的子树的节点数。
+            for(var j = 0; j < children[i].Count; ++j) {
+                score *= trees[children[i][j]];
+            }
+
+            // 删掉以当前节点为根的子树后，剩余部分的节点数。
+            var left = num - trees[i];
+            if(left > 0) {
+                score *= left;
+            }
+            scores[i] = score;
+        }
+
+        var max = long.MinValue;
+        for(var i = 0; i < num; ++i) {
+            max = Math.Max(max, scores[i]);
+        }
+
+        var result = 0;
+        for(var i = 0; i < num; ++i) {
+            if(scores[i] == max) {
+                ++result;
             }
         }
 
         return result;
+    }
+
+    private int dfs(int node, List<int>[] children, int[] trees) {
+        trees[node] = 1;
+        for(var i = 0; i < children[node].Count; ++i) {
+            trees[node] += dfs(children[node][i], children, trees);
+        }
+
+        return trees[node];
     }
 }
 ```
